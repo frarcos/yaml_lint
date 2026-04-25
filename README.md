@@ -99,7 +99,18 @@ plugins:
     version: ^0.1.0
     # During local development on yaml_lint itself, swap `version:` for:
     # path: ../yaml_lint
+    diagnostics:
+      yaml_lint: true
 ```
+
+> **Important.** The `diagnostics:` block is **required**. The analysis
+> server only surfaces diagnostics from a plugin when the plugin's
+> diagnostic id is explicitly enabled under `diagnostics:` in
+> `analysis_options.yaml`. Without `diagnostics: { yaml_lint: true }`
+> the plugin will load and parse `lint_rules.yaml`, but no
+> warnings/errors will appear in the IDE or in `dart analyze` —
+> giving the impression that yaml_lint is broken when it is in fact
+> just muted.
 
 > **Note.** The dev-dependency entry is what lets `dart run
 > yaml_lint:init` and `dart run yaml_lint:validate` resolve the
