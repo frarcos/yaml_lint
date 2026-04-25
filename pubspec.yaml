@@ -10,8 +10,15 @@ environment:
 dependencies:
   # analysis_server_plugin and analyzer must move in lockstep:
   # the plugin package exact-pins a single analyzer release per version.
-  analysis_server_plugin: 0.3.14
-  analyzer: ^12.1.0
+  #
+  # We deliberately track an older analyzer line (10.0.x) so yaml_lint
+  # remains installable alongside Flutter stable, which currently
+  # ships `meta` from the SDK at `1.17.0`. The first analyzer that
+  # bumped its `meta` floor to `^1.18.0` is `analyzer 10.0.2`; we pin
+  # to `analysis_server_plugin 0.3.7` (analyzer 10.0.1) which is the
+  # latest pair compatible with Flutter-stable's `meta`.
+  analysis_server_plugin: 0.3.7
+  analyzer: ^10.0.0
   yaml: ^3.1.2
   yaml_edit: ^2.2.0
   source_span: ^1.10.0

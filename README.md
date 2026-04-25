@@ -54,7 +54,12 @@ you assigned (`error` / `warning` / `info`).
 - Dart `^3.10` / Flutter `^3.38`.
 - `analysis_server_plugin` exact‑pins `analyzer` per release;
   `yaml_lint` follows that lockstep. The current pin is
-  `analysis_server_plugin: 0.3.14` ↔ `analyzer: ^12.1.0`.
+  `analysis_server_plugin: 0.3.7` ↔ `analyzer: ^10.0.0`. This
+  pair is deliberately chosen to remain compatible with the
+  `meta` version Flutter stable currently ships from its SDK
+  (`1.17.0`). Newer analyzer lines (`10.0.2+`, `11.x`, `12.x`,
+  `13.x`) bump the `meta` floor to `^1.18.0`, which Flutter
+  stable can't satisfy until it ships a newer SDK.
 - Cursor / VS Code with the Dart extension, IntelliJ / Android Studio,
   or any other editor that drives the standard Dart Analysis Server.
 

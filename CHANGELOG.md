@@ -4,7 +4,10 @@
 
 Initial public release.
 
-- Analysis Server plugin built on `analysis_server_plugin` (analyzer 12.x).
+- Analysis Server plugin built on `analysis_server_plugin` (pinned to
+  the `0.3.7` ↔ `analyzer 10.0.x` lockstep pair so the package remains
+  installable alongside Flutter stable, which currently ships
+  `meta: 1.17.0` from its SDK).
 - YAML rule DSL with all 10 `target.type` kinds (`method_call`, `widget`,
   `constructor`, `named_argument`, `function`, `class`, `import`,
   `annotation`, `variable_declaration`, `return_statement`).
