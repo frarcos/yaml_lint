@@ -1,0 +1,18 @@
+# Dart tooling
+# https://dart.dev/guides/libraries/private-files
+.dart_tool/
+
+# Avoid committing pubspec.lock for library packages; see
+# https://dart.dev/guides/libraries/private-files#pubspeclock.
+pubspec.lock
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# FVM (Flutter Version Management)
+.fvm/
+
+# OS
+.DS_Store

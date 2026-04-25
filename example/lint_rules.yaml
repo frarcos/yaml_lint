@@ -1,0 +1,240 @@
+version: 1
+
+# Each section below exercises a specific slice of the engine. The
+# numbering matches the comments in `lib/main.dart` so the demo file
+# reads as a top-to-bottom tour. Together these rules cover every
+# `RuleTargetType`, every constraint (`must_contain`, `must_not_contain`,
+# `count`), the `when:` boolean composition, and the `scope:` / `layers:`
+# file-level filtering.
+
+# Top-level layers — used by the `domain_is_pure` rule below. Maps
+# layer names to the path globs that constitute that layer. Globs can
+# match either project-relative file paths (`lib/data/**`) or import
+# URIs (`package:yaml_lint_example/data/**`); we list both so the
+# example works whether or not analyzer resolves the import to its
+# file. Real-world projects typically only need one form.
+layers:
+  domain:
+    paths:
+      - "lib/domain/**"
+      - "package:yaml_lint_example/domain/**"
+  data:
+    paths:
+      - "lib/data/**"
+      - "package:yaml_lint_example/data/**"
+  presentation:
+    paths:
+      - "lib/presentation/**"
+      - "package:yaml_lint_example/presentation/**"
+
+rules:
+  # === One rule per RuleTargetType (no constraints) ==================
+
+  # 1. method_call
+  - id: no_legacy_callback
+    description: Use modernCallback instead of legacyCallback.
+    target:
+      type: method_call
+      names: [legacyCallback]
+    report:
+      severity: warning
+      message: "Use modernCallback instead"
+
+  # 2. widget
+  - id: no_container_widget
+    description: Prefer Box (design system) over Container.
+    target:
+      type: widget
+      names: [Container]
+    report:
+      severity: error
+      message: "Use Box instead of Container"
+
+  # 3. constructor
+  - id: no_legacy_service
+    description: LegacyService is deprecated; migrate to ServiceV2.
+    target:
+      type: constructor
+      names: [LegacyService]
+    report:
+      severity: error
+      message: "Migrate from LegacyService to ServiceV2"
+
+  # 4. function
+  - id: no_legacy_function
+    description: legacyFunc is the old API.
+    target:
+      type: function
+      names: [legacyFunc]
+    report:
+      severity: warning
+      message: "Rename legacyFunc to modernFunc"
+
+  # 5. class
+  - id: no_legacy_class
+    description: LegacyClass is forbidden.
+    target:
+      type: class
+      names: [LegacyClass]
+    report:
+      severity: error
+      message: "LegacyClass is forbidden"
+
+  # 6. import
+  - id: no_dart_io
+    description: dart:io is forbidden in this layer.
+    target:
+      type: import
+      names: ["dart:io"]
+    report:
+      severity: error
+      message: "dart:io must not be imported here"
+
+  # 7. annotation
+  - id: no_deprecated_annotation
+    description: Document deprecations in CHANGELOG instead of @deprecated.
+    target:
+      type: annotation
+      names: [deprecated]
+    report:
+      severity: info
+      message: "Avoid @deprecated; document in CHANGELOG instead"
+
+  # 8. variable_declaration
+  - id: no_legacy_var
+    target:
+      type: variable_declaration
+      names: [legacyVar]
+    report:
+      severity: warning
+      message: "Rename legacyVar to a domain-meaningful identifier"
+
+  # 9. return_statement (matches by the returned expression's static type)
+  - id: no_dynamic_returns
+    target:
+      type: return_statement
+      names: [dynamic]
+    report:
+      severity: warning
+      message: "Avoid returning a dynamically-typed value"
+
+  # === Constraints: must_contain / must_not_contain / count ==========
+
+  # 10. named_argument + must_contain.
+  #
+  #     The closure body of every onTap / onPressed must include a call
+  #     to Analytics.track somewhere inside. Rule fires only on the
+  #     closures that *forget* the call.
+  - id: include_analytics_tracking
+    description: >
+      Wire analytics into onTap / onPressed / onLongPress / onSecondary
+      callbacks. `follow_calls: 1` lets the engine accept callbacks that
+      delegate to a one-deep helper (e.g. `onPressed: () => doSomething()`,
+      where doSomething() is the one calling Analytics.track), and to
+      tear-offs (e.g. `onLongPress: trackLongPress`).
+    target:
+      type: named_argument
+      names: [onTap, onPressed, onLongPress, onSecondary]
+    must_contain:
+      method_call: [Analytics.track]
+    follow_calls: 1
+    report:
+      severity: warning
+      message: "Wire analytics into this callback"
+
+  # 11. method_call + must_not_contain.
+  #
+  #     A `setUp(...)` block in tests must not call `print(...)`. The
+  #     constraint walks the entire MethodInvocation, so the `print`
+  #     buried inside the closure passed to `setUp` is found.
+  - id: no_print_in_setup
+    description: setUp() blocks must not print().
+    target:
+      type: method_call
+      names: [setUp]
+    must_not_contain:
+      method_call: [print]
+    report:
+      severity: warning
+      message: "Don't print() from setUp(); use a logger"
+
+  # 12. function + count.
+  #
+  #     `printSpammer` may call print() at most once. The function
+  #     visitor anchors on the declaration; the count visitor walks
+  #     its body counting matches.
+  - id: limit_print_spammer
+    description: printSpammer should not call print() more than once.
+    target:
+      type: function
+      names: [printSpammer]
+    count:
+      target: method_call
+      names: [print]
+      max: 1
+    report:
+      severity: warning
+      message: "Too many print() calls in printSpammer"
+
+  # === Conditional rules via `when:` =================================
+
+  # 13. method_call gated by `when:` boolean composition.
+  #
+  #     Flag `secretApi()` calls *only* when:
+  #       - the file's path contains "/legacy/", AND
+  #       - the enclosing function name doesn't start with "trusted".
+  #     This exercises `all:` + `not:` + `file_path` + a leaf
+  #     `method_name_starts_with` predicate together.
+  - id: secret_api_legacy_only
+    description: secretApi() is only allowed in trusted code paths.
+    target:
+      type: method_call
+      names: [secretApi]
+    when:
+      all:
+        - file_path: { contains: /legacy/ }
+        - not:
+            method_name_starts_with: trusted
+    report:
+      severity: warning
+      message: "secretApi() is restricted in legacy code paths"
+
+  # === scope: + layers: + report.url =================================
+
+  # 14. scope: limit `no_todo_comments_in_lib` to lib/ files.
+  #
+  #     Demonstrates the file-level pre-filter: matching files inside
+  #     test/ never run this rule, even though the same `print()`
+  #     would otherwise match. We also wire a `report.url` here to
+  #     prove the IDE-link plumbing works.
+  - id: no_print_outside_lib
+    description: Only allow print() in lib/, not in build scripts/tests.
+    target:
+      type: method_call
+      names: [print]
+    scope:
+      include: ["bin/**", "tool/**"]
+    report:
+      severity: warning
+      message: "print() is forbidden outside lib/"
+      url: "https://example.com/yaml_lint/no_print_outside_lib"
+
+  # 15. layers + import_from_layer.
+  #
+  #     The `domain_is_pure` rule fires on import directives in files
+  #     under `lib/domain/` that import from the data or presentation
+  #     layers. Here we use a `when:` predicate combining `file_path`
+  #     and `import_from_layer` to demonstrate the layers plumbing.
+  - id: domain_is_pure
+    description: Domain layer must not import from data or presentation.
+    target:
+      type: import
+    scope:
+      include: ["lib/domain/**"]
+    when:
+      any:
+        - import_from_layer: data
+        - import_from_layer: presentation
+    report:
+      severity: error
+      message: "Domain layer must not depend on data/presentation"

@@ -1,0 +1,9 @@
+include: package:lints/recommended.yaml
+
+# yaml_lint registers a single umbrella rule named `yaml_lint`. Enabling it
+# turns on every rule defined in this project's `lint_rules.yaml`.
+plugins:
+  yaml_lint:
+    path: ../
+    diagnostics:
+      yaml_lint: true
